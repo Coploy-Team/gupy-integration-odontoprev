@@ -69,6 +69,7 @@ Mkfile.old
 dkms.conf
 .DS_Store
 
+
 # Firebase credentials (sensitive)
 firebase.json
 firebase-hml.json
