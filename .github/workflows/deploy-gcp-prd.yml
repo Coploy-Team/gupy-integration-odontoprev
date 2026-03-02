@@ -21,6 +21,13 @@ jobs:
     - name: Set up Google Cloud SDK
       run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
+    - name: Create Firebase credentials
+      env:
+        GCP_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      run: |
+        echo "$GCP_CREDENTIALS" > firebase.json
+        cp firebase.json firebase-hml.json
+
     - name: Build Docker image
       run: |
         docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/coploy-gupy-odontoprev .
