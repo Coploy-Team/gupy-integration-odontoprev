@@ -8,7 +8,6 @@ RUN dotnet restore
 
 # Copy everything else and build
 COPY . ./
-RUN cp appsettings.example.json appsettings.json
 RUN dotnet build -c Release -o /app/build
 
 FROM build AS publish
