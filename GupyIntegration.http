@@ -1,0 +1,57 @@
+@baseUrl = http://localhost:5003
+@apiKey = e746f5546110cdd01cdd6e0b3f0644d37c2342f1
+
+### Buscar Jobs
+GET {{baseUrl}}/api/job
+X-Api-Key: {{apiKey}}
+
+### Buscar Job específico
+GET {{baseUrl}}/api/job?id=8451877
+X-Api-Key: {{apiKey}}
+
+### Buscar Aplicações de um Job
+GET {{baseUrl}}/api/application/8451877/applications
+    ?applicationId=529925562
+    &page=1
+    &perPage=10
+    &order=id%20asc
+X-Api-Key: {{apiKey}}
+
+### Webhook para Jobs Publicados
+POST {{baseUrl}}/api/webhook/job-published
+Content-Type: application/json
+X-Api-Key: {{apiKey}}
+
+{
+    "action": "job.published",
+    "data": {
+        "jobId": 8451877,
+        "title": "Teste de Integração"
+    }
+}
+
+### Webhook para Aplicações Movidas
+POST {{baseUrl}}/api/webhook/application-moved
+Content-Type: application/json
+X-Api-Key: {{apiKey}}
+
+{
+    "action": "application.assigned",
+    "data": {
+        "jobId": 8451877,
+        "applicationId": 529925562
+    }
+}
+
+### Webhook para Aplicações Criadas
+POST {{baseUrl}}/api/webhook/application-created
+Content-Type: application/json
+X-Api-Key: {{apiKey}}
+
+{
+    "action": "application.assigned",
+    "data": {
+        "jobId": 8451877,
+        "applicationId": 529925562
+    }
+}

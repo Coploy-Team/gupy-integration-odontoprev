@@ -1,0 +1,78 @@
+# .NET Core / C# specific
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj.user
+*.sw?
+*.cache
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Prerequisites
+*.d
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+.DS_Store
+
+# Firebase credentials (sensitive)
+firebase.json
+firebase-hml.json
+
+# Local config with secrets (use appsettings.example.json as base)
+appsettings.json
+appsettings.Development.json
