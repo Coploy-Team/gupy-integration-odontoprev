@@ -130,5 +130,41 @@ namespace GupyIntegration.Controllers
         return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
       }
     }
+
+    /// <summary>
+    /// Adds a comment to a specific job application timeline
+    /// </summary>
+    /// <param name="jobId">ID of the job</param>
+    /// <param name="applicationId">ID of the application</param>
+    /// <param name="comment">Comment to be added</param>
+    /// <response code="200">Comment successfully added</response>
+    /// <response code="401">Unauthorized - Invalid API key</response>
+    /// <response code="500">Internal server error</response>
+    [HttpPost("{jobId}/applications/{applicationId}/comments")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AddCommentToApplication(
+        [FromRoute] long jobId,
+        [FromRoute] long applicationId,
+        [FromBody] GupyCommentRequest comment)
+    {
+      try
+      {
+        _logger.LogInformation("Adicionando comentário à aplicação - JobId: {JobId}, ApplicationId: {ApplicationId}", jobId, applicationId);
+        await _gupyApplicationService.AddCommentToApplicationAsync(jobId, applicationId, comment);
+        return Ok(new { success = true });
+      }
+      catch (HttpRequestException ex)
+      {
+        _logger.LogError("Erro ao adicionar comentário - JobId: {JobId}, ApplicationId: {ApplicationId}, Erro: {Error}", jobId, applicationId, ex.Message);
+        return StatusCode((int)ex.StatusCode!, ex.Message);
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError("Erro ao adicionar comentário - JobId: {JobId}, ApplicationId: {ApplicationId}, Erro: {Error}", jobId, applicationId, ex.Message);
+        return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
+      }
+    }
   }
 }

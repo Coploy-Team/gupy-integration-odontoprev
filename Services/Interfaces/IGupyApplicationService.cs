@@ -6,5 +6,6 @@ namespace GupyIntegration.Services.Interfaces
   {
     Task<GupyApplicationResponse> GetApplicationsAsync(long jobId, long? applicationId = null, int page = 1, int perPage = 10, string order = "id asc");
     Task AddTagToApplicationAsync(long jobId, long applicationId, ApplicationTag tag);
+    Task AddCommentToApplicationAsync(long jobId, long applicationId, GupyCommentRequest comment);
   }
 }

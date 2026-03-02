@@ -77,5 +77,29 @@ namespace GupyIntegration.Services
         throw;
       }
     }
+
+    public async Task AddCommentToApplicationAsync(long jobId, long applicationId, GupyCommentRequest comment)
+    {
+      _logger.LogInformation("Adicionando comentário à aplicação - JobId: {JobId}, ApplicationId: {ApplicationId}",
+          jobId, applicationId);
+
+      try
+      {
+        var response = await _httpClient.PostAsJsonAsync(
+            $"api/v1/jobs/{jobId}/applications/{applicationId}/comments",
+            comment);
+
+        response.EnsureSuccessStatusCode();
+
+        _logger.LogInformation("Comentário adicionado com sucesso - JobId: {JobId}, ApplicationId: {ApplicationId}",
+            jobId, applicationId);
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Erro ao adicionar comentário - JobId: {JobId}, ApplicationId: {ApplicationId}",
+            jobId, applicationId);
+        throw;
+      }
+    }
   }
 }
