@@ -84,13 +84,28 @@ namespace GupyIntegration.Services
           return;
         }
 
-        // STEP 1: Valida se a vaga existe no Firebase (PRIMEIRO!)
+        // STEP 1: Valida se a vaga existe no Firebase (ou sincroniza se foi adicionada depois)
         _logger.LogDebug("🔍 Verificando se vaga existe no Firebase - JobId: {JobId}", payload.Data.Job.Id);
         var job = await _firebaseService.GetJobByIdentifierAsync(_companyId, payload.Data.Job.Id.ToString());
         
         if (job == null)
         {
-          _logger.LogError("❌ Vaga não encontrada no Firebase - JobId: {JobId}. Email não será enviado.", 
+          _logger.LogInformation("📥 Vaga não encontrada no Firebase - tentando sincronizar (job pode ter sido atualizado com step depois) - JobId: {JobId}", 
+            payload.Data.Job.Id);
+          try
+          {
+            await SyncJobToFirebaseAsync(payload.Data.Job.Id, payload.Data.Job.Name, throwIfNoStep: false);
+            job = await _firebaseService.GetJobByIdentifierAsync(_companyId, payload.Data.Job.Id.ToString());
+          }
+          catch (Exception ex)
+          {
+            _logger.LogWarning(ex, "Falha ao sincronizar vaga - JobId: {JobId}", payload.Data.Job.Id);
+          }
+        }
+        
+        if (job == null)
+        {
+          _logger.LogError("❌ Vaga não encontrada no Firebase após tentativa de sync - JobId: {JobId}. Email não será enviado.", 
             payload.Data.Job.Id);
           return;
         }
@@ -306,29 +321,11 @@ namespace GupyIntegration.Services
 
       try
       {
-        var steps = await _jobService.GetJobStepsAsync(jobId);
-        var hasEntrevistaCoployStep = steps.Results?.Any(s =>
-            string.Equals(s.Name, "Entrevista Coploy", StringComparison.OrdinalIgnoreCase)) ?? false;
+        var job = await _jobService.GetJobsAsync(jobId);
+        var jobData = job.Results?.FirstOrDefault(x => x.Id == jobId);
+        var title = jobData?.Name ?? $"Vaga {jobId}";
 
-        if (!hasEntrevistaCoployStep)
-        {
-          _logger.LogInformation("Vaga ignorada - não possui etapa 'Entrevista Coploy' - JobId: {JobId}", jobId);
-          return;
-        }
-
-        var job = await GetAndValidateJob(jobId);
-        var jobData = job.Results?.FirstOrDefault(x => x.Id == jobId)
-            ?? throw new InvalidOperationException($"Dados específicos não encontrados para o JobId: {jobId}");
-
-        var title = !string.IsNullOrEmpty(jobData.Name) ? jobData.Name : $"Vaga {jobId}";
-
-        var skillsResponse = await GenerateSkills(jobData, title);
-        var questions = await GenerateQuestions(jobData, title, skillsResponse);
-
-        var postJob = JobMapper.MapToPostJob(jobData, title, skillsResponse, questions);
-
-        await _firebaseService.SaveJobPostingAsync(_companyId, postJob);
-
+        await SyncJobToFirebaseAsync(jobId, title, throwIfNoStep: true);
         _logger.LogInformation("Vaga processada manualmente e salva com sucesso - JobId: {JobId}", jobId);
       }
       catch (Exception ex)
@@ -336,6 +333,33 @@ namespace GupyIntegration.Services
         _logger.LogError(ex, "Erro ao processar vaga manualmente - JobId: {JobId}", jobId);
         throw;
       }
+    }
+
+    private async Task SyncJobToFirebaseAsync(long jobId, string jobName, bool throwIfNoStep = false)
+    {
+      var steps = await _jobService.GetJobStepsAsync(jobId);
+      var hasEntrevistaCoployStep = steps.Results?.Any(s =>
+          string.Equals(s.Name, "Entrevista Coploy", StringComparison.OrdinalIgnoreCase)) ?? false;
+
+      if (!hasEntrevistaCoployStep)
+      {
+        _logger.LogInformation("Vaga não possui etapa 'Entrevista Coploy' - sync ignorado - JobId: {JobId}", jobId);
+        if (throwIfNoStep)
+          throw new InvalidOperationException($"Vaga {jobId} não possui etapa 'Entrevista Coploy'");
+        return;
+      }
+
+      var job = await GetAndValidateJob(jobId);
+      var jobData = job.Results?.FirstOrDefault(x => x.Id == jobId)
+          ?? throw new InvalidOperationException($"Dados não encontrados para o JobId: {jobId}");
+
+      var title = !string.IsNullOrEmpty(jobName) ? jobName : jobData.Name ?? $"Vaga {jobId}";
+      var skillsResponse = await GenerateSkills(jobData, title);
+      var questions = await GenerateQuestions(jobData, title, skillsResponse);
+      var postJob = JobMapper.MapToPostJob(jobData, title, skillsResponse, questions);
+
+      await _firebaseService.SaveJobPostingAsync(_companyId, postJob);
+      _logger.LogInformation("✅ Vaga sincronizada com sucesso - JobId: {JobId}", jobId);
     }
 
     private void ValidatePayload(JobPublishedPayload payload)
