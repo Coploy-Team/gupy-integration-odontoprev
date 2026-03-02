@@ -12,7 +12,10 @@ namespace GupyIntegration.Attributes
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-      if (!context.HttpContext.Request.Headers.TryGetValue(ApiKeyHeaderName, out var potentialApiKey))
+      var potentialApiKey = context.HttpContext.Request.Headers[ApiKeyHeaderName].FirstOrDefault()
+          ?? context.HttpContext.Request.Query["apiKey"].FirstOrDefault();
+
+      if (string.IsNullOrEmpty(potentialApiKey))
       {
         context.Result = new UnauthorizedResult();
         return;
