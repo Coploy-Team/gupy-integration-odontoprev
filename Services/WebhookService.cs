@@ -86,8 +86,8 @@ namespace GupyIntegration.Services
 
         // STEP 1: Valida se a vaga existe no Firebase (ou sincroniza se foi adicionada depois)
         _logger.LogDebug("🔍 Verificando se vaga existe no Firebase - JobId: {JobId}", payload.Data.Job.Id);
-        var job = await _firebaseService.GetJobByIdentifierAsync(_companyId, payload.Data.Job.Id.ToString());
-        
+        var job = await _firebaseService.GetJobByJobIdAsync(_companyId, payload.Data.Job.Id.ToString());
+
         if (job == null)
         {
           _logger.LogInformation("📥 Vaga não encontrada no Firebase - tentando sincronizar (job pode ter sido atualizado com step depois) - JobId: {JobId}", 
@@ -95,7 +95,7 @@ namespace GupyIntegration.Services
           try
           {
             await SyncJobToFirebaseAsync(payload.Data.Job.Id, payload.Data.Job.Name, throwIfNoStep: false);
-            job = await _firebaseService.GetJobByIdentifierAsync(_companyId, payload.Data.Job.Id.ToString());
+            job = await _firebaseService.GetJobByJobIdAsync(_companyId, payload.Data.Job.Id.ToString());
           }
           catch (Exception ex)
           {
@@ -295,9 +295,30 @@ namespace GupyIntegration.Services
           return;
         }
 
-        var job = await GetAndValidateJob(jobId);
-        var jobData = job.Results?.FirstOrDefault(x => x.Id == payload?.Data?.Id)
-            ?? throw new InvalidOperationException($"Dados específicos não encontrados para o JobId: {payload?.Data?.Id}");
+        // Usa os dados do payload diretamente para preservar description, responsibilities e prerequisites
+        var jobData = new Result
+        {
+          Id = payload.Data.Id,
+          Code = payload.Data.Code ?? string.Empty,
+          Name = payload.Data.Name ?? string.Empty,
+          Description = payload.Data.Description ?? string.Empty,
+          Responsibilities = payload.Data.Responsibilities ?? string.Empty,
+          Prerequisites = payload.Data.Prerequisites ?? string.Empty,
+          AdditionalInformation = payload.Data.AdditionalInformation ?? string.Empty,
+          AddressCity = payload.Data.AddressCity ?? string.Empty,
+          AddressState = payload.Data.AddressState ?? string.Empty,
+          AddressCountry = payload.Data.AddressCountry ?? string.Empty,
+          WorkplaceType = payload.Data.WorkplaceType ?? string.Empty,
+          ApplicationDeadline = payload.Data.ApplicationDeadline ?? string.Empty,
+          DepartmentName = payload.Data.Department?.Name ?? string.Empty,
+          CustomFields = payload.Data.CustomFields?
+            .Select(cf => new CustomField
+            {
+              Id = cf.Id,
+              Label = cf.Title,
+              Value = cf.Value != null ? (Value?)new Value { String = cf.Value } : null
+            }).ToList() ?? []
+        };
 
         var skillsResponse = await GenerateSkills(jobData, payload?.Data?.Name ?? string.Empty);
         var questions = await GenerateQuestions(jobData, payload?.Data?.Name ?? string.Empty, skillsResponse);
@@ -428,7 +449,7 @@ namespace GupyIntegration.Services
         candidateEmail, payload.Data.Job.Id, !string.IsNullOrEmpty(defaultPassword) ? "SIM" : "NÃO");
 
       // Busca a vaga no Firebase (já foi validada antes, mas precisamos do objeto)
-      var job = await _firebaseService.GetJobByIdentifierAsync(_companyId, payload.Data.Job.Id.ToString());
+      var job = await _firebaseService.GetJobByJobIdAsync(_companyId, payload.Data.Job.Id.ToString());
 
       if (job == null)
       {

@@ -40,7 +40,9 @@ namespace GupyIntegration.Services.Mappers
         JobRequirements = HtmlContentCleaner.Clean(jobData?.Prerequisites ?? "") ?? "Pré-requisitos não disponíveis",
         EmploymentType = jobData?.WorkplaceType ?? "Tipo de trabalho não especificado",
         CareerLevel = GetCareerLevel(jobData?.CustomFields ?? []),
-        Identifier = jobData?.Id.ToString() ?? string.Empty,
+        Identifier = !string.IsNullOrWhiteSpace(jobData?.Code)
+              ? $"{jobData.Id} - {jobData.Code.Trim()}"
+              : jobData?.Id.ToString() ?? string.Empty,
         JobCategories = jobData?.DepartmentName ?? string.Empty,
         ClosingDate = GetClosingDateTimestamp(jobData?.ApplicationDeadline ?? string.Empty),
         TypeInterview = "interview",

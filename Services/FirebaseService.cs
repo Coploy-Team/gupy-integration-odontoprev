@@ -235,6 +235,23 @@ namespace GupyIntegration.Services
       }
     }
 
+    public async Task<PostJob?> GetJobByJobIdAsync(string companyId, string jobId)
+    {
+      try
+      {
+        var jobsQuery = _firestoreDb.Collection("companies").Document(companyId).Collection("postJob")
+          .WhereEqualTo("jobId", jobId);
+
+        var snapshot = await jobsQuery.GetSnapshotAsync();
+        return snapshot.Documents.FirstOrDefault()?.ConvertTo<PostJob>();
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Error fetching job post by jobId: {Message}", ex.Message);
+        throw;
+      }
+    }
+
     public async Task<T?> GetByFullPathAsync<T>(string fullPath)
     {
       try

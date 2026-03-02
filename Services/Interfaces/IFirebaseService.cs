@@ -11,6 +11,7 @@ public interface IFirebaseService
   Task CreateUserAsync(string email, string password, string name, string externalId, string phoneNumber);
   Task UpdateUserExternalIdAsync(string path, string externalId);
   Task<PostJob?> GetJobByIdentifierAsync(string companyId, string identifier);
+  Task<PostJob?> GetJobByJobIdAsync(string companyId, string jobId);
   Task<List<T>?> GetSubAsync<T>(string path);
   Task<T?> GetSubIdAsync<T>(string path);
   Task<T?> GetByFullPathAsync<T>(string fullPath);
