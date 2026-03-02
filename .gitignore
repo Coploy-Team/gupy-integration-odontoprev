@@ -73,6 +73,5 @@ dkms.conf
 firebase.json
 firebase-hml.json
 
-# Local config with secrets (use appsettings.example.json as base)
-appsettings.json
+# Local config (appsettings.Development.json for dev overrides)
 appsettings.Development.json
